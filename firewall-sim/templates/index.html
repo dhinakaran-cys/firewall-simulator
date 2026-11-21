@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firewall Simulator</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <h1>Firewall Simulator</h1>
+  <p>Every packet walks down the rule list from the top. The first rule that matches decides its fate.</p>
+</header>
+
+<p id="status" role="status" aria-live="polite"></p>
+
+<main>
+  <section class="panel" aria-labelledby="h-rules">
+    <h2 id="h-rules">Rule chain</h2>
+    <div class="scroll">
+      <table id="rules-table">
+        <thead><tr><th>#</th><th>Action</th><th>Source</th><th>Dest</th><th>Proto</th><th>Port</th><th>Description</th><th>Order</th></tr></thead>
+        <tbody></tbody>
+        <tfoot><tr id="row-default"><td></td><td><span class="pill BLOCK">BLOCK</span></td><td colspan="5">Default policy: nothing above matched</td><td></td></tr></tfoot>
+      </table>
+    </div>
+
+    <h3>Add a rule</h3>
+    <p class="hint">New rules go to the bottom. Use the arrows to reorder.</p>
+    <form id="rule-form" class="grid">
+      <label>Action
+        <select name="action"><option>ALLOW</option><option selected>BLOCK</option></select></label>
+      <label>Protocol
+        <select name="protocol"><option>any</option><option>TCP</option><option>UDP</option><option>ICMP</option></select></label>
+      <label>Source IP or CIDR <input name="src_ip" placeholder="any or 10.0.0.0/8"></label>
+      <label>Destination IP or CIDR <input name="dst_ip" placeholder="any"></label>
+      <label>Dest port <input name="dst_port" type="number" min="1" max="65535" placeholder="any"></label>
+      <label>Description <input name="description" placeholder="Why this rule exists"></label>
+      <button type="submit" class="primary">Add rule</button>
+    </form>
+  </section>
+
+  <div class="stack">
+    <section class="panel" aria-labelledby="h-test">
+      <h2 id="h-test">Test a packet</h2>
+      <div class="presets" role="group" aria-label="Example packets">
+        <button type="button" data-p="45.33.32.156,192.168.1.50,TCP,22">SSH from the internet</button>
+        <button type="button" data-p="192.168.1.10,192.168.1.50,TCP,22">SSH from the LAN</button>
+        <button type="button" data-p="203.0.113.5,192.168.1.50,TCP,443">HTTPS from a bad network</button>
+        <button type="button" data-p="192.168.1.10,8.8.8.8,ICMP,">Ping from the LAN</button>
+        <button type="button" data-p="198.51.100.23,192.168.1.1,TCP,3389">Remote desktop</button>
+      </div>
+      <form id="sim-form" class="grid">
+        <label>Source IP <input name="src" value="198.51.100.23" required></label>
+        <label>Destination IP <input name="dst" value="192.168.1.50" required></label>
+        <label>Protocol
+          <select name="proto"><option>TCP</option><option>UDP</option><option>ICMP</option></select></label>
+        <label>Dest port <input name="dport" type="number" min="1" max="65535" value="443"></label>
+        <button type="submit" class="primary">Send packet</button>
+      </form>
+      <div id="result" class="result" hidden>
+        <div class="verdict" id="verdict"></div>
+        <div>
+          <p id="reason"></p>
+          <p class="mono small" id="scapy"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-traffic">
+      <h2 id="h-traffic">Traffic log</h2>
+      <div class="toolbar">
+        <button id="gen-btn" type="button">Generate 20 random packets</button>
+        <label class="file">Replay a .pcap <input id="pcap" type="file" accept=".pcap,.cap"></label>
+        <button id="clear-btn" type="button">Clear log</button>
+      </div>
+      <div class="toolbar filters">
+        <label>Verdict <select id="f-verdict"><option value="">all</option><option>ALLOW</option><option>BLOCK</option></select></label>
+        <label>Protocol <select id="f-proto"><option value="">all</option><option>TCP</option><option>UDP</option><option>ICMP</option></select></label>
+        <label>Source starts with <input id="f-src" placeholder="192.168."></label>
+      </div>
+      <div class="scroll tall">
+        <table id="log-table">
+          <thead><tr><th>Time</th><th>Source</th><th>Dest</th><th>Proto</th><th>Port</th><th>Verdict</th><th>Why</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-stats">
+      <h2 id="h-stats">Stats</h2>
+      <div id="stats"></div>
+    </section>
+  </div>
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
